@@ -37,6 +37,15 @@ async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs = A
   }
 }
 
+function logAIProviderResponse(provider: string, response: Response, bodyPreview: string) {
+  console.log(`[${provider}] Response:`, {
+    status: response.status,
+    statusText: response.statusText,
+    contentType: response.headers.get('content-type'),
+    bodyPreview: bodyPreview.slice(0, 500),
+  });
+}
+
 // Validates and repairs responses from model output to ensure the UI never crashes
 function validateResponse(data: any): RefineResponse {
   if (typeof data !== 'object' || data === null) {
@@ -109,6 +118,34 @@ function validateResponse(data: any): RefineResponse {
   };
 }
 
+// Robust JSON parsing that handles markdown code fences and common AI response issues
+function parseAIResponse(text: string): any {
+  if (!text || typeof text !== 'string') {
+    throw new Error('Empty response from AI');
+  }
+
+  let cleaned = text.trim();
+
+  // Remove markdown code fences (```json ... ``` or ``` ... ```)
+  const codeFenceMatch = cleaned.match(/^```(?:json)?\s*\n?([\s\S]*?)\n?```$/);
+  if (codeFenceMatch) {
+    cleaned = codeFenceMatch[1].trim();
+  }
+
+  // Remove any leading/trailing non-JSON text (e.g., explanatory text before/after JSON)
+  const jsonStart = cleaned.indexOf('{');
+  const jsonEnd = cleaned.lastIndexOf('}');
+  if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+    cleaned = cleaned.slice(jsonStart, jsonEnd + 1);
+  }
+
+  try {
+    return JSON.parse(cleaned);
+  } catch (e) {
+    throw new Error(`Failed to parse AI response as JSON: ${e instanceof Error ? e.message : 'Unknown error'}. Response preview: ${cleaned.slice(0, 200)}`);
+  }
+}
+
 export async function refinePrompt(prompt: string): Promise<RefineResponse> {
   const cleanPrompt = prompt.trim();
   if (!cleanPrompt) {
@@ -124,28 +161,39 @@ export async function refinePrompt(prompt: string): Promise<RefineResponse> {
   const geminiKey = process.env.GEMINI_API_KEY || import.meta.env.GEMINI_API_KEY;
   const openAIKey = process.env.OPENAI_API_KEY || import.meta.env.OPENAI_API_KEY;
 
+  console.log('[refinePrompt] Provider check:', {
+    hasGeminiKey: !!geminiKey,
+    hasOpenAIKey: !!openAIKey,
+    promptLength: cleanPrompt.length,
+  });
+
   if (geminiKey) {
     try {
+      console.log('[refinePrompt] Attempting Gemini API...');
       return await refineWithGemini(cleanPrompt, geminiKey);
     } catch (e) {
-      console.error('Failed to refine with Gemini API, falling back to mock mode:', e);
+      console.error('[refinePrompt] Gemini API failed, falling back:', e instanceof Error ? e.message : e);
     }
   }
 
   if (openAIKey) {
     try {
+      console.log('[refinePrompt] Attempting OpenAI API...');
       return await refineWithOpenAI(cleanPrompt, openAIKey);
     } catch (e) {
-      console.error('Failed to refine with OpenAI API, falling back to mock mode:', e);
+      console.error('[refinePrompt] OpenAI API failed, falling back:', e instanceof Error ? e.message : e);
     }
   }
 
   // Fallback to Mock Mode if no keys are configured
+  console.log('[refinePrompt] No API keys configured, using mock mode');
   return getMockRefinement(cleanPrompt);
 }
 
 async function refineWithGemini(prompt: string, apiKey: string): Promise<RefineResponse> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+  // Use a valid, current Gemini model
+  const model = 'gemini-1.5-flash';
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
   const response = await fetchWithTimeout(url, {
     method: 'POST',
@@ -198,18 +246,35 @@ async function refineWithGemini(prompt: string, apiKey: string): Promise<RefineR
     })
   });
 
+  // Read raw response body for logging
+  const responseText = await response.text();
+  logAIProviderResponse('Gemini', response, responseText);
+
   if (!response.ok) {
-    const errText = await response.text();
-    throw new Error(`Gemini API returned error ${response.status}: ${errText}`);
+    // Handle non-JSON error responses (e.g., HTML error pages)
+    let errorDetail = responseText;
+    try {
+      const errJson = JSON.parse(responseText);
+      errorDetail = errJson.error?.message || JSON.stringify(errJson);
+    } catch {
+      // Keep raw text if not JSON
+    }
+    throw new Error(`Gemini API error ${response.status}: ${errorDetail.slice(0, 500)}`);
   }
 
-  const data = await response.json();
+  let data: any;
+  try {
+    data = JSON.parse(responseText);
+  } catch (e) {
+    throw new Error(`Gemini API returned invalid JSON: ${e instanceof Error ? e.message : 'Unknown error'}. Response preview: ${responseText.slice(0, 200)}`);
+  }
+
   const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!jsonText) {
-    throw new Error('Gemini API returned an empty response');
+    throw new Error('Gemini API returned an empty response (no text in candidates)');
   }
 
-  const parsed = JSON.parse(jsonText);
+  const parsed = parseAIResponse(jsonText);
   return validateResponse({ ...parsed, isMock: false });
 }
 
@@ -230,18 +295,35 @@ async function refineWithOpenAI(prompt: string, apiKey: string): Promise<RefineR
     })
   });
 
+  // Read raw response body for logging
+  const responseText = await response.text();
+  logAIProviderResponse('OpenAI', response, responseText);
+
   if (!response.ok) {
-    const errText = await response.text();
-    throw new Error(`OpenAI API returned error ${response.status}: ${errText}`);
+    // Handle non-JSON error responses
+    let errorDetail = responseText;
+    try {
+      const errJson = JSON.parse(responseText);
+      errorDetail = errJson.error?.message || JSON.stringify(errJson);
+    } catch {
+      // Keep raw text if not JSON
+    }
+    throw new Error(`OpenAI API error ${response.status}: ${errorDetail.slice(0, 500)}`);
   }
 
-  const data = await response.json();
+  let data: any;
+  try {
+    data = JSON.parse(responseText);
+  } catch (e) {
+    throw new Error(`OpenAI API returned invalid JSON: ${e instanceof Error ? e.message : 'Unknown error'}. Response preview: ${responseText.slice(0, 200)}`);
+  }
+
   const jsonText = data.choices?.[0]?.message?.content;
   if (!jsonText) {
-    throw new Error('OpenAI API returned an empty response');
+    throw new Error('OpenAI API returned an empty response (no content in choices)');
   }
 
-  const parsed = JSON.parse(jsonText);
+  const parsed = parseAIResponse(jsonText);
   return validateResponse({ ...parsed, isMock: false });
 }
 

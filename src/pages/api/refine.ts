@@ -5,44 +5,74 @@ export const prerender = false;
 
 const USER_FACING_ERROR = 'Intent couldn\'t refine that prompt right now. Try again.';
 
+function logRequestInfo(request: Request, body: any) {
+  console.log('[/api/refine] Request received:', {
+    method: request.method,
+    contentType: request.headers.get('content-type'),
+    contentLength: request.headers.get('content-length'),
+    hasBody: !!body,
+    promptLength: body?.prompt?.length || 0,
+  });
+}
+
+function logResponseInfo(status: number, isError: boolean, resultOrError: any) {
+  console.log('[/api/refine] Response:', {
+    status,
+    isError,
+    resultKeys: isError ? null : Object.keys(resultOrError || {}),
+    resultIsMock: isError ? null : resultOrError?.isMock,
+    errorMessage: isError ? resultOrError : null,
+  });
+}
+
+function jsonResponse(data: unknown, status: number): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache, no-store, must-revalidate'
+    }
+  });
+}
+
 export const POST: APIRoute = async ({ request }) => {
+  let requestBody: any = null;
   try {
-    const body = await request.json();
-    const { prompt } = body;
+    requestBody = await request.json();
+    logRequestInfo(request, requestBody);
+    
+    const { prompt } = requestBody;
     
     if (!prompt || typeof prompt !== 'string') {
-      return new Response(JSON.stringify({ error: 'Missing prompt parameter' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      const errorResponse = { error: 'Missing prompt parameter' };
+      logResponseInfo(400, true, errorResponse);
+      return jsonResponse(errorResponse, 400);
     }
 
     const cleanPrompt = prompt.trim();
     if (!cleanPrompt) {
-      return new Response(JSON.stringify({ error: 'Prompt cannot be empty' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      const errorResponse = { error: 'Prompt cannot be empty' };
+      logResponseInfo(400, true, errorResponse);
+      return jsonResponse(errorResponse, 400);
     }
 
     if (cleanPrompt.length > 5000) {
-      return new Response(JSON.stringify({ error: 'Prompt exceeds maximum length of 5000 characters' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      const errorResponse = { error: 'Prompt exceeds maximum length of 5000 characters' };
+      logResponseInfo(400, true, errorResponse);
+      return jsonResponse(errorResponse, 400);
     }
 
     const result = await refinePrompt(cleanPrompt);
+    logResponseInfo(200, false, result);
     
-    return new Response(JSON.stringify(result), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache, no-store, must-revalidate'
-      }
-    });
+    return jsonResponse(result, 200);
   } catch (error: any) {
-    console.error('API Error in /api/refine:', error);
+    console.error('[/api/refine] Uncaught error:', {
+      message: error?.message,
+      name: error?.name,
+      stack: error?.stack,
+      requestBody: requestBody ? { promptLength: requestBody.prompt?.length || 0 } : null,
+    });
     
     let message = USER_FACING_ERROR;
     let status = 500;
@@ -64,9 +94,17 @@ export const POST: APIRoute = async ({ request }) => {
       status = 400;
     }
     
-    return new Response(JSON.stringify({ error: message }), {
-      status,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    const errorResponse = { error: message };
+    logResponseInfo(status, true, errorResponse);
+    
+    return jsonResponse(errorResponse, status);
   }
+};
+
+// Top-level safety net - ensures we ALWAYS return valid JSON
+export const ALL: APIRoute = async ({ request }) => {
+  if (request.method !== 'POST') {
+    return jsonResponse({ error: 'Method not allowed' }, 405);
+  }
+  return POST({ request } as any);
 };
