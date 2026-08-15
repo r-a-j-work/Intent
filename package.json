@@ -12,6 +12,16 @@
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^7.2.1"
+    "@astrojs/node": "^11.1.1",
+    "@astrojs/react": "^6.0.2",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "ai": "^7.0.64",
+    "astro": "^7.2.1",
+    "motion": "^13.1.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "tailwindcss": "^4.3.3"
   }
 }

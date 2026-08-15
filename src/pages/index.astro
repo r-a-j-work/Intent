@@ -1,11 +1,190 @@
 ---
-import Welcome from '../components/Welcome.astro';
-import Layout from '../layouts/Layout.astro';
-
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+import Layout from "../layouts/Layout.astro";
+import { IntentApp } from "../components/intent/IntentApp";
 ---
 
 <Layout>
-	<Welcome />
+  <!-- Main Grid/Container -->
+  <div
+    class="min-h-screen flex flex-col justify-between selection:bg-brand-muted selection:text-brand"
+  >
+    <!-- Navigation -->
+    <header
+      class="border-b border-border-base/50 bg-bg-base/80 backdrop-blur sticky top-0 z-50 transition-colors"
+    >
+      <div
+        class="max-w-4xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between"
+      >
+        <!-- Logo -->
+        <a href="/" class="flex items-baseline gap-1.5 group">
+          <span
+            class="font-serif text-2xl font-semibold tracking-tight text-text-base"
+          >
+            intent.
+          </span>
+          <span
+            class="text-[10px] font-mono tracking-widest text-brand uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          >
+            refine
+          </span>
+        </a>
+
+        <!-- Menu / Meta Links -->
+        <nav class="flex items-center gap-6">
+          <a
+            href="#how-it-works"
+            class="text-xs font-mono text-text-muted hover:text-text-base transition-colors"
+          >
+            How it works
+          </a>
+          <a
+            href="https://github.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-xs font-mono text-text-muted hover:text-text-base transition-colors"
+          >
+            GitHub
+          </a>
+
+          <!-- Theme Toggle Button -->
+          <button
+            id="theme-toggle"
+            aria-label="Toggle theme"
+            class="p-1.5 rounded-full border border-border-base hover:border-text-muted bg-bg-base hover:bg-border-base/20 transition-all cursor-pointer"
+          >
+            <!-- Moon Icon (shown in light mode) -->
+            <svg
+              id="moon-icon"
+              class="w-3.5 h-3.5 block dark:hidden text-text-base"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.364l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"
+              ></path>
+            </svg>
+            <!-- Sun/Light Icon (shown in dark mode) -->
+            <svg
+              id="sun-icon"
+              class="w-3.5 h-3.5 hidden dark:block text-text-base"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+              ></path>
+            </svg>
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 py-8 md:py-14">
+      <!-- Hero Header -->
+      <div class="max-w-4xl mx-auto px-4 md:px-6 text-center mb-8 md:mb-10">
+        <h1
+          class="text-3xl sm:text-4xl md:text-5xl font-serif font-light tracking-tight text-text-base mb-3 leading-[1.1]"
+        >
+          Say exactly what you mean.
+        </h1>
+        <p
+          class="text-xs sm:text-sm md:text-base font-sans text-text-muted max-w-xl mx-auto leading-relaxed"
+        >
+          Turn rough ideas into clear, specific instructions that AI can
+          actually work with.
+        </p>
+      </div>
+
+      <!-- Main Interactive Island -->
+      <IntentApp client:load />
+
+      <!-- How it Works / Editorial Grid -->
+      <section
+        id="how-it-works"
+        class="max-w-4xl mx-auto px-4 md:px-6 pt-12 md:pt-16 border-t border-border-base/50 mt-12 md:mt-16 transition-colors"
+      >
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div>
+            <h2
+              class="text-xs font-mono uppercase tracking-wider text-brand mb-2"
+            >
+              The Loop
+            </h2>
+            <p class="text-xs text-text-muted leading-relaxed font-sans">
+              Intent follows a simple, high-performing iteration loop to turn
+              raw thoughts into functional instructions.
+            </p>
+          </div>
+
+          <div class="border border-border-base/40 rounded p-4 bg-bg-base/30">
+            <span class="font-mono text-xs text-brand block mb-2"
+              >01 / Paste</span
+            >
+            <p class="text-xs text-text-base leading-relaxed">
+              Drop in whatever raw, unpolished prompt is currently yielding
+              mediocre or generic AI output.
+            </p>
+          </div>
+
+          <div class="border border-border-base/40 rounded p-4 bg-bg-base/30">
+            <span class="font-mono text-xs text-brand block mb-2"
+              >02 / Analyze</span
+            >
+            <p class="text-xs text-text-base leading-relaxed">
+              Intent tests the prompt's ambiguity limits, scoring clarity,
+              context, specificity, and constraints.
+            </p>
+          </div>
+
+          <div class="border border-border-base/40 rounded p-4 bg-bg-base/30">
+            <span class="font-mono text-xs text-brand block mb-2"
+              >03 / Refine</span
+            >
+            <p class="text-xs text-text-base leading-relaxed">
+              Our refinement compiler structures instructions, scopes out
+              variables, and creates a clean output ready for copy.
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer
+      class="border-t border-border-base/50 bg-bg-base/20 transition-colors py-8 mt-12"
+    >
+      <div
+        class="max-w-4xl mx-auto px-4 md:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-text-muted"
+      >
+        <div>
+          &copy; {new Date().getFullYear()} intentrefine.com &bull; Independent internet
+          product.
+        </div>
+        <div class="flex gap-4">
+          <a href="#" class="hover:text-text-base transition-colors">Privacy</a>
+          <a href="#" class="hover:text-text-base transition-colors">Terms</a>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Handle theme toggle button script -->
+  <script is:inline>
+    const themeBtn = document.getElementById("theme-toggle");
+    if (themeBtn) {
+      themeBtn.addEventListener("click", () => {
+        const isDark = document.documentElement.classList.toggle("dark");
+        localStorage.setItem("theme", isDark ? "dark" : "light");
+      });
+    }
+  </script>
 </Layout>
