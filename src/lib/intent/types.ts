@@ -9,6 +9,7 @@ export interface ScoreBreakdown {
   context: number;
   specificity: number;
   constraints: number;
+  expectedOutput: number;
 }
 
 export interface RefineResponse {

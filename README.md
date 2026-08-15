@@ -1,46 +1,30 @@
-# Astro Starter Kit: Basics
+# Intent
 
-```sh
-npm create astro@latest -- --template basics
-```
+> Turn rough ideas into precise instructions.
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+Intent is an AI-powered prompt refinement tool that analyzes a user's intent, identifies ambiguity and missing context, and transforms rough prompts into clear, structured instructions designed to produce better AI outputs.
 
-## 🚀 Project Structure
+## ✨ Features
 
-Inside of your Astro project, you'll see the following folders and files:
+- **Intent Score** — Measures the clarity and specificity of a prompt.
+- **Prompt Analysis** — Identifies ambiguity, missing context, weak constraints, and other issues.
+- **AI Refinement** — Generates a more precise and context-aware version of the original prompt.
+- **Original vs. Refined** — Compare the original prompt with its improved version.
+- **Expected Output** — Provides an indication of the output the refined prompt is designed to produce.
+- **One-click Copy** — Copy the refined prompt for use with any AI tool.
+- **Responsive UI** — Designed for both desktop and mobile.
+
+## 🧠 How It Works
 
 ```text
-/
-├── public/
-│   └── favicon.svg
-├── src
-│   ├── assets
-│   │   └── astro.svg
-│   ├── components
-│   │   └── Welcome.astro
-│   ├── layouts
-│   │   └── Layout.astro
-│   └── pages
-│       └── index.astro
-└── package.json
-```
-
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+User Prompt
+     ↓
+Intent Analysis
+     ↓
+Prompt Scoring
+     ↓
+Weakness Detection
+     ↓
+AI Refinement
+     ↓
+Refined Prompt + Expected Output

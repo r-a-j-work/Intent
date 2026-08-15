@@ -10,7 +10,8 @@ export const ScoreBreakdown: React.FC<ScoreBreakdownProps> = ({ breakdown }) => 
     { label: 'Clarity', value: breakdown.clarity },
     { label: 'Context', value: breakdown.context },
     { label: 'Specificity', value: breakdown.specificity },
-    { label: 'Constraints', value: breakdown.constraints }
+    { label: 'Constraints', value: breakdown.constraints },
+    { label: 'Expected Output', value: breakdown.expectedOutput }
   ];
 
   return (
